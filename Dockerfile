@@ -1,29 +1,25 @@
-# Use the official .NET SDK image to build and publish the app
+# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-
-# Copy csproj and restore as distinct layers
-COPY StudentCourseManagement/StudentCourseManagement.csproj ./StudentCourseManagement/
-RUN dotnet restore StudentCourseManagement/StudentCourseManagement.csproj
-
-# Copy the rest of the source code
-COPY StudentCourseManagement/. ./StudentCourseManagement/
-WORKDIR /src/StudentCourseManagement
-
-# Build and publish the app
-RUN dotnet publish -c Release -o /app --no-restore
-
-# Use the official ASP.NET runtime image for the final image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app .
 
-# Expose port 80 and 443
+# Copy only csproj and restore
+COPY StudentCourseManagement/StudentCourseManagement.csproj ./StudentCourseManagement/
+RUN dotnet restore ./StudentCourseManagement/StudentCourseManagement.csproj
+
+# Copy the full backend source code
+COPY StudentCourseManagement ./StudentCourseManagement
+
+# Publish
+WORKDIR /app/StudentCourseManagement
+RUN dotnet publish -c Release -o /app/out
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/out ./
+
+# Expose default port
 EXPOSE 80
-EXPOSE 443
 
-# Set environment variables for ASP.NET
-ENV ASPNETCORE_URLS=http://+:80
-
-# Start the application
+# Start the app
 ENTRYPOINT ["dotnet", "StudentCourseManagement.dll"]
