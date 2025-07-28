@@ -19,9 +19,7 @@ WORKDIR /app
 COPY --from=build /app/out ./
 
 # Expose default port
-EXPOSE 80
-
-ENV ASPNETCORE_URLS = http://+:80
+EXPOSE 8080
 
 # Start the app
 ENTRYPOINT ["dotnet", "StudentCourseManagement.dll"]
